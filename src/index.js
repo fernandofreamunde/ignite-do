@@ -14,13 +14,13 @@ function checksExistsUserAccount(request, response, next) {
 
   const { username } = request.headers
   if (!username) {
-    return response.status(403).send("Unauthorized!");
+    return response.status(403).send("Unauthorized.");
   }
 
   const user = users.find(user => user.username == username);
 
   if (!user) {
-    return response.status(403).send("You cannot access this!");
+    return response.status(403).json({"error":"You cannot access this."});
   }
 
   request.user = user;
@@ -34,7 +34,7 @@ app.post('/users', (request, response) => {
   const existing = users.find(user => user.username == username);
 
   if (existing) {
-    return response.status(400).json({"error":"Username already exists!"});
+    return response.status(400).json({"error":"Username already exists."});
   }
 
   const newUser = {
@@ -72,7 +72,20 @@ app.post('/todos', checksExistsUserAccount, (request, response) => {
 });
 
 app.put('/todos/:id', checksExistsUserAccount, (request, response) => {
-  // Complete aqui
+  
+  const user = request.user;
+  const { id } = request.params;
+  const { title, deadline } = request.body;
+  const todo = user.todos.find(todo => todo.id == id);
+
+  if (!todo) {
+    return response.status(404).json({"error":"Todo not found."});
+  }
+
+  todo.title = title ? title : todo.title;
+  todo.deadline = deadline ? new Date(deadline) : todo.deadline;
+
+  return response.status(202).json(todo);
 });
 
 app.patch('/todos/:id/done', checksExistsUserAccount, (request, response) => {
